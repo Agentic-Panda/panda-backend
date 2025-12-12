@@ -12,7 +12,9 @@ class LLMFactory:
             return GeminiClient(
                 model_name=kwargs.get("model_name", "gemini-1.5-flash"),
                 api_key=Config.GEMINI_API,
-                temperature=kwargs.get("temperature", 0.7)
+                temperature=kwargs.get("temperature", 0.7),
+                response_schema=kwargs.get("response_schema"),
+                mime_type=kwargs.get("response_mime_type"),
             )    
         else:
             raise ValueError(f"Unknown provider: {provider}")
