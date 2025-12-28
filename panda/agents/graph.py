@@ -1,75 +1,99 @@
 import asyncio
-import operator
-from typing import Annotated, List, TypedDict
+
 from langgraph.graph import StateGraph, END
+
 from panda.agents.nodes.supervisor import supervisor_node
+from panda.models.agents.state import MasterState
+from langchain_core.messages import HumanMessage, AIMessage
 
 
-class BaseMessage:
-    def __init__(self, content, type="user"):
-        self.content = content
-        self.type = type
-    def __repr__(self): return f"{self.type}: {self.content}"
-
-class AgentState(TypedDict):
-    messages: Annotated[List[BaseMessage], operator.add]
-    next_step: str
-    user_emotion: str
-
-
-async def scheduler_node(state: AgentState):
-    print("   --> [Scheduler] (Async) Checking calendar...")
-    await asyncio.sleep(0.1) # Simulate IO delay
-    return {"messages": [BaseMessage("Event scheduled.", "ai")]}
-
-async def analyst_node(state: AgentState):
-    print("   --> [Analyst] (Async) Analyzing DB logs...")
+async def productivity_node(state: MasterState):
+    print("   --> [PRODUCTIVITY] Scheduling task...")
     await asyncio.sleep(0.1)
-    return {"messages": [BaseMessage("Logs updated.", "ai")]}
+    return {
+        "messages": state["messages"] + [
+            AIMessage("Meeting scheduled successfully.")
+        ]
+    }
 
-async def communications_node(state: AgentState):
-    print("   --> [Communications] (Async) Sending email...")
+
+async def operations_node(state: MasterState):
+    print("   --> [OPERATIONS] Performing system operation...")
     await asyncio.sleep(0.1)
-    return {"messages": [BaseMessage("Email sent.", "ai")]}
+    return {
+        "messages": state["messages"] + [
+            AIMessage("System operation completed.")
+        ]
+    }
+
+
+async def health_node(state: MasterState):
+    print("   --> [HEALTH] Analyzing health data...")
+    await asyncio.sleep(0.1)
+    return {
+        "messages": state["messages"] + [
+            AIMessage("Health check complete. All good.")
+        ]
+    }
+
+
+async def scribe_node(state: MasterState):
+    print("   --> [SCRIBE] Writing content...")
+    await asyncio.sleep(0.1)
+    return {
+        "messages": state["messages"] + [
+            AIMessage("Document drafted successfully.")
+        ]
+    }
+
 
 async def build_and_run_graph():
-    workflow = StateGraph(AgentState)
+    workflow = StateGraph(MasterState)
 
-    workflow.add_node("Supervisor", supervisor_node)
-    workflow.add_node("Scheduler", scheduler_node)
-    workflow.add_node("Analyst", analyst_node)
-    workflow.add_node("Communications", communications_node)
+    workflow.add_node("SUPERVISOR", supervisor_node)
+    workflow.add_node("PRODUCTIVITY", productivity_node)
+    workflow.add_node("OPERATIONS", operations_node)
+    workflow.add_node("HEALTH", health_node)
+    workflow.add_node("SCRIBE", scribe_node)
 
-    workflow.set_entry_point("Supervisor")
+    workflow.set_entry_point("SUPERVISOR")
 
     workflow.add_conditional_edges(
-        "Supervisor",
+        "SUPERVISOR",
         lambda state: state["next_step"],
         {
-            "Scheduler": "Scheduler",
-            "Analyst": "Analyst",
-            "Communications": "Communications"
+            "PRODUCTIVITY": "PRODUCTIVITY",
+            "OPERATIONS": "OPERATIONS",
+            "HEALTH": "HEALTH",
+            "SCRIBE": "SCRIBE"
         }
     )
 
-    workflow.add_edge("Scheduler", END)
-    workflow.add_edge("Analyst", END)
-    workflow.add_edge("Communications", END)
+    workflow.add_edge("PRODUCTIVITY", END)
+    workflow.add_edge("OPERATIONS", END)
+    workflow.add_edge("HEALTH", END)
+    workflow.add_edge("SCRIBE", END)
 
     app = workflow.compile()
 
     print("=== STARTING ASYNC GRAPH TESTS ===")
 
-    # Test 1: Scheduler Intent
-    print("\n--- Test 1 ---")
-    inputs = {"messages": [BaseMessage("Book a meeting with Alice")]}
-    
-    await app.ainvoke(inputs)
+    tests = [
+        ("Book a meeting with Alice", "PRODUCTIVITY"),
+        ("Restart the server", "OPERATIONS"),
+        ("I feel tired and stressed", "HEALTH"),
+        ("Write an email to my manager", "SCRIBE"),
+    ]
 
-    print("\n--- Test 2 ---")
-    inputs = {"messages": [BaseMessage("I am feeling very stressed today")]}
-    await app.ainvoke(inputs)
+    for i, (prompt, expected) in enumerate(tests, 1):
+        print(f"\n--- Test {i}: {expected} ---")
 
-    print("\n--- Test 3 ---")
-    inputs = {"messages": [BaseMessage("Send a mail to john doe about the meeting")]}
-    await app.ainvoke(inputs)
+        inputs = {
+            "messages": [HumanMessage(prompt)]
+        }
+
+        result = await app.ainvoke(inputs)
+
+        print("Final Messages:")
+        for msg in result["messages"]:
+            print(" ", msg)

@@ -1,8 +1,13 @@
-from typing import TypedDict, Annotated, List
+from typing import TypedDict, Annotated, List, Optional
 import operator
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import AnyMessage
+from langgraph.graph.message import add_messages
 
-class AgentState(TypedDict):
-    messages: Annotated[List[BaseMessage], operator.add]
-    next_step: str
-    user_emotion: str
+class MasterState(TypedDict):
+    messages: Annotated[List[AnyMessage], add_messages]
+    next_step: Optional[str]
+    
+    # GLOBAL CONTEXT: Shared data accessible by all agents
+    # (Useful so the Booking agent knows who the 'current_user' is)
+    #user_profile: Optional[dict] 
+    #current_time: str
