@@ -9,7 +9,7 @@ from panda.models.agents.response import SupervisorRouterResponse
 
 llm_client = LLMFactory.create_client(
     provider=LLMProvider.GEMINI,
-    model_name="gemini-2.5-flash",
+    model_name="xiaomi/mimo-v2-flash:free",
 )
 
 supervisor_llm = llm_client.with_structured_output(SupervisorRouterResponse)

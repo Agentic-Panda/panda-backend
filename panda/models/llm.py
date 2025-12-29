@@ -8,6 +8,7 @@ class LLMProvider(Enum):
     OLLAMA = "ollama"
     ANTHROPIC = "anthropic"
     GEMINI = "gemini"
+    OPENROUTER = "openrouter"
 
 class BaseLLMClient(ABC):
     def __init__(self, model_name: str, temperature: float = 0.7):
