@@ -11,3 +11,7 @@ class MasterState(TypedDict):
     # (Useful so the Booking agent knows who the 'current_user' is)
     #user_profile: Optional[dict] 
     #current_time: str
+
+class ProductivityState(TypedDict):
+    messages: Annotated[List[AnyMessage], add_messages]
+    internal_decision: Optional[str]

@@ -7,3 +7,8 @@ class SupervisorRouterResponse(BaseModel):
         ...,
         description="The next step to route the user to."
     )
+
+class ProductivityRouterResponse(BaseModel):
+    next_step: Literal["EMAIL_AGENT", "SCHEDULER_AGENT"] = Field(
+        description="The specific agent to handle the user request."
+    )
