@@ -9,3 +9,5 @@ tenacity
 langchain
 aiogoogle
 urlextract
+langchain-google-genai
+langchain-openai

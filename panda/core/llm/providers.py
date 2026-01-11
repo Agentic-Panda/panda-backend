@@ -23,25 +23,19 @@ class GeminiClient(BaseLLMClient):
 
         self.client = genai.Client(api_key=api_key)
         self.response_schema= response_schema
-        
-        self.config = types.GenerateContentConfig(
-            temperature=temperature,
-            candidate_count=1,
-            response_schema=response_schema,
-            response_mime_type=mime_type,
-        )
+        self.mime_type = mime_type
 
     @retry(
         wait=wait_random_exponential(min=5, max=60), 
         stop=stop_after_attempt(3),
         retry=retry_if_exception_type(Exception)
     )
-    async def _generate_with_retry(self, prompt: str) -> str | BaseModel:
+    async def _generate_with_retry(self, config, prompt: str):
         try:
             response = await self.client.aio.models.generate_content(
                 model=self.model_name,
                 contents=prompt,
-                config=self.config
+                config=config
             )
             
             # safety filter returns None if triggered
@@ -57,7 +51,11 @@ class GeminiClient(BaseLLMClient):
         except Exception:
             raise LLMFailure
 
-    async def generate(self, system_role: str, user_query: str) -> str: #TODO update the abstract class after verifying response schema
-        # TODO change to proper system prompt if needed
-        full_prompt = f"System Instruction: {system_role}\n\nUser Query: {user_query}"
-        return await self._generate_with_retry(full_prompt)
+    async def generate(self, system_role: str, user_query: str): #TODO update the abstract class after verifying response schema
+        config = types.GenerateContentConfig(
+            temperature=self.temperature,
+            candidate_count=1,
+            response_schema=self.response_schema,
+            response_mime_type=self.mime_type,
+        )
+        return await self._generate_with_retry(config, user_query)

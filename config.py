@@ -14,6 +14,7 @@ class Config(object):
         exit(1)
 
     GEMINI_API = getenv('GEMINI_API')
+    OPENROUTER_API_KEY = getenv("OPENROUTER_API_KEY")
 
     OAUTHLIB_INSECURE_TRANSPORT = getenv('OAUTHLIB_INSECURE_TRANSPORT', 1) # only for local testing
     GOOGLE_CLIENT_SECRETS_FILE = getenv('CLIENT_SECRETS_FILE', 'gmail_secret.json')
