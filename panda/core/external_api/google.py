@@ -9,7 +9,8 @@ from panda.database.mongo.connection import mongo, COLLECTIONS
 
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.send",
-    "https://www.googleapis.com/auth/gmail.readonly"
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/gmail.compose"
 ]
 
 
@@ -55,3 +56,5 @@ class GoogleAPI(ABC):
         creds = user.get('gmail_credentials')
         if not creds:
             raise NotDoneGoogleAuthentication
+
+        return creds

@@ -18,6 +18,7 @@ class GmailAPI(GoogleAPI):
         try:
             self.user_cred = await GoogleAPI.load_user_creds()
         except NotDoneGoogleAuthentication:
+            print("GMAIL: Failed to load User credentials")
             self.user_cred = None
 
 
