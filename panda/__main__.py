@@ -10,6 +10,7 @@ from panda.router.gmail import gmail_router
 from panda.router.settings import settings_router
 from .database.mongo.connection import mongo
 from panda.core.llm.config_manager import config_manager
+from panda.core.external_api.gmail import gmail_api
 
 async def some_cron_jobs():
     try:
@@ -21,6 +22,7 @@ async def some_cron_jobs():
 async def lifespan(app: FastAPI):
     await mongo.connect()
     await config_manager.load_config()
+    await gmail_api.load_creds()
     
     cron_task = asyncio.create_task(some_cron_jobs())
 
