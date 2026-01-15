@@ -1,10 +1,11 @@
+from typing import List
 from langchain_core.prompts import ChatPromptTemplate
 
 from panda.core.llm.factory import LLMFactory
 from panda.models.agents.state import AgentState, PlanStep
 from panda.models.agents.response import PlanModel
 from panda.core.llm.prompts import PLANNER_PROMPT
-from typing import List
+
 
 def planner_node(state: AgentState) -> AgentState:
     planner_prompt = ChatPromptTemplate.from_messages([

@@ -55,7 +55,7 @@ def create_workflow() -> StateGraph:
     return workflow
 
 
-def run_workflow(user_input: str):
+async def run_workflow(user_input: str):
     """Execute the workflow with a user request."""
     
     # Create and compile workflow
@@ -78,7 +78,7 @@ def run_workflow(user_input: str):
     print("="*80)
     
     # Execute workflow
-    final_state = app.invoke(initial_state)
+    final_state = await app.ainvoke(initial_state)
     
     print("\n" + "="*80)
     print("✅ WORKFLOW COMPLETED")

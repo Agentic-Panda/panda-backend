@@ -1,66 +1,78 @@
-import asyncio
-import json
+import base64
 
 from aiogoogle import Aiogoogle
-from datetime import datetime
+from bs4 import BeautifulSoup
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-from panda import Config
-from panda.database.mongo.connection import mongo, COLLECTIONS
+from panda.core.external_api.google import GoogleAPI, NotDoneGoogleAuthentication
 from panda.utils.text import clean_text, clean_urls
 
-from bs4 import BeautifulSoup
-
-SCOPES = [
-    "https://www.googleapis.com/auth/gmail.send",
-    "https://www.googleapis.com/auth/gmail.readonly"
-]
 
 
-def _extract_message_text(payload):
+class GmailAPI(GoogleAPI):
+    async def load_creds(self):
+        self.client_creds = GoogleAPI.load_client_creds()
 
-    def search_parts(parts, mime_type):
-        for part in parts:
-            if part['mimeType'] == mime_type:
-                return clean_text(part['body'].get('data', ''))
-            if 'parts' in part:
-                found = search_parts(part['parts'], mime_type)
-                if found: return found
-        return None
-
-    text_content = None
-    if 'parts' in payload:
-        text_content = search_parts(payload['parts'], 'text/plain')
-    
-    if not text_content:
-        if payload.get('mimeType') == 'text/html':
-            html_content = clean_text(payload['body'].get('data', ''))
-        elif 'parts' in payload:
-            html_content = search_parts(payload['parts'], 'text/html')
-        else:
-            html_content = ""
-            
-        if html_content:
-            soup = BeautifulSoup(html_content, "html.parser")
-            text_content = soup.get_text(separator=' ')
-
-    if text_content:
-        text = " ".join(text_content.split())
-        return clean_urls(text)
-        
-    return ""
-
-
-async def poll_gmail_updates(username: str): 
-    while True:
+        # user creds failing is acceptable
         try:
-            user = await mongo.db[COLLECTIONS['users']].find_one({'username': username})
-            if not user:
-                break
+            self.user_cred = await GoogleAPI.load_user_creds()
+        except NotDoneGoogleAuthentication:
+            self.user_cred = None
+
+
+    @staticmethod
+    def _extract_message_text(payload):
+
+        def search_parts(parts, mime_type):
+            for part in parts:
+                if part['mimeType'] == mime_type:
+                    return clean_text(part['body'].get('data', ''))
+                if 'parts' in part:
+                    found = search_parts(part['parts'], mime_type)
+                    if found: return found
+            return None
+
+        text_content = None
+        if 'parts' in payload:
+            text_content = search_parts(payload['parts'], 'text/plain')
+        
+        if not text_content:
+            if payload.get('mimeType') == 'text/html':
+                html_content = clean_text(payload['body'].get('data', ''))
+            elif 'parts' in payload:
+                html_content = search_parts(payload['parts'], 'text/html')
+            else:
+                html_content = ""
                 
-            creds = user.get('gmail_credentials')
+            if html_content:
+                soup = BeautifulSoup(html_content, "html.parser")
+                text_content = soup.get_text(separator=' ')
+
+        if text_content:
+            text = " ".join(text_content.split())
+            return clean_urls(text)
             
-            # 2. Authenticate
-            async with Aiogoogle(client_creds=GmailWrapper.get_client_creds(), user_creds=creds) as aiogoogle:
+        return ""
+
+
+    def _create_message(self, sender, to, subject, message_text):
+        """Creates a MIME message and encodes it for the Gmail API."""
+        message = MIMEMultipart()
+        message['to'] = to
+        message['from'] = sender
+        message['subject'] = subject
+
+        msg = MIMEText(message_text)
+        message.attach(msg)
+
+        raw = base64.urlsafe_b64encode(message.as_bytes())
+        return {'raw': raw.decode()}
+
+
+    async def get_n_mails(self, n: int):
+        try:
+            async with Aiogoogle(client_creds=self.client_creds, user_creds=self.user_cred) as aiogoogle:
                 gmail = await aiogoogle.discover('gmail', 'v1')
                 
                 response = await aiogoogle.as_user(
@@ -68,7 +80,7 @@ async def poll_gmail_updates(username: str):
                         userId='me',
                         labelIds=['INBOX'],
                         q='is:unread category:primary',
-                        maxResults=5
+                        maxResults=n
                     )
                 )
                 
@@ -78,8 +90,8 @@ async def poll_gmail_updates(username: str):
                     for msg_summary in messages:
                         msg_id = msg_summary['id']
 
-                        if await is_message_processed(msg_id): 
-                            continue
+                        #if await is_message_processed(msg_id): 
+                            #continue
 
                         full_msg = await aiogoogle.as_user(
                             gmail.users.messages.get(
@@ -91,7 +103,7 @@ async def poll_gmail_updates(username: str):
                         headers = full_msg['payload']['headers']
                         subject = next((h['value'] for h in headers if h['name'] == 'Subject'), "No Subject")
                         sender = next((h['value'] for h in headers if h['name'] == 'From'), "Unknown")
-                        body = _extract_message_text(full_msg['payload'])
+                        body = self._extract_message_text(full_msg['payload'])
 
                         email_obj = {
                             "id": msg_id,
@@ -108,41 +120,93 @@ async def poll_gmail_updates(username: str):
 
         except Exception as e:
             print(f"Error during polling: {e}")
-        
-        break
-        await asyncio.sleep(10) 
 
 
-async def is_message_processed(email_id):
-    doc = await mongo.db[COLLECTIONS['processed_emails']].find_one({'email_id': email_id})
-    return doc is not None
+    async def search_email(self, query: str, max_results: int = 5):
+        """
+        Searches for emails based on a query string (e.g., 'from:boss subject:urgent').
+        """
+        async with Aiogoogle(client_creds=self.client_creds, user_creds=self.user_cred) as aiogoogle:
+            gmail = await aiogoogle.discover('gmail', 'v1')
 
+            response = await aiogoogle.as_user(
+                gmail.users.messages.list(
+                    userId='me',
+                    q=query,
+                    maxResults=max_results
+                )
+            )
 
-async def mark_message_as_processed(email_id):
-    await mongo.db[COLLECTIONS['processed_emails']].insert_one({
-        'email_id': email_id,
-        'processed_at': datetime.utcnow() 
-    })
+            messages = response.get('messages', [])
+            results = []
 
+            if messages:
+                for msg_summary in messages:
+                    full_msg = await aiogoogle.as_user(
+                        gmail.users.messages.get(
+                            userId='me',
+                            id=msg_summary['id']
+                        )
+                    )
 
-def get_client_creds():
-    """
-    Get JSON data from google credentials file.
+                    headers = full_msg['payload']['headers']
+                    subject = next((h['value'] for h in headers if h['name'] == 'Subject'), "No Subject")
+                    sender = next((h['value'] for h in headers if h['name'] == 'From'), "Unknown")
+                    
+                    body = self._extract_message_text(full_msg['payload'])
 
-    Returns:
-        json_data
-    """
-    with open(Config.GOOGLE_CLIENT_SECRETS_FILE, "r") as f:
-        data = json.load(f)
+                    results.append({
+                        "id": msg_summary['id'],
+                        "sender": sender,
+                        "subject": subject,
+                        "body": body
+                    })
+            
+            return results
+
     
-    creds_payload = data.get("web") or data.get("installed")
-    
-    if not creds_payload:
-        raise ValueError("Invalid credentials file: could not find 'web' or 'installed' keys.")
+    async def send_email(self, to: str, subject: str, body: str):
+        """
+        Sends an email immediately.
+        """
+        # Create the payload
+        # Note: 'me' is used as sender, Gmail API resolves this to the authenticated user
+        message_payload = self._create_message('me', to, subject, body)
 
-    return {
-        "client_id": creds_payload["client_id"],
-        "client_secret": creds_payload["client_secret"],
-        "scopes": SCOPES,
-        "redirect_uri": Config.GOOGLE_REDIRECT_URI
-    }
+        async with Aiogoogle(client_creds=self.client_creds, user_creds=self.user_cred) as aiogoogle:
+            gmail = await aiogoogle.discover('gmail', 'v1')
+
+            try:
+                sent_message = await aiogoogle.as_user(
+                    gmail.users.messages.send(userId='me', json=message_payload)
+                )
+                return sent_message
+            except Exception as e:
+                print(f"An error occurred sending email: {e}")
+                return None
+
+
+    async def draft_email(self, to: str, subject: str, body: str):
+        """
+        Creates a draft email but does not send it.
+        """
+
+        message_payload = {
+            'message': self._create_message('me', to, subject, body)
+        }
+
+        async with Aiogoogle(client_creds=self.client_creds, user_creds=self.user_cred) as aiogoogle:
+            gmail = await aiogoogle.discover('gmail', 'v1')
+
+            try:
+                draft = await aiogoogle.as_user(
+                    gmail.users.drafts.create(userId='me', json=message_payload)
+                )
+                print(f"Draft created with ID: {draft['id']}")
+                return draft
+            except Exception as e:
+                print(f"An error occurred creating draft: {e}")
+                return None
+
+
+gmail_api = GmailAPI()

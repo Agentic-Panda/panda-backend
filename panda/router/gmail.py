@@ -2,14 +2,10 @@ from fastapi import APIRouter, Request, HTTPException
 from aiogoogle import Aiogoogle
 from datetime import datetime
 
-from panda import Config
-from panda.core.external_api.gmail import SCOPES, get_client_creds
+from panda.core.external_api.google import SCOPES, GoogleAPI
 from panda.database.mongo.connection import mongo, COLLECTIONS
 
 gmail_router = APIRouter()
-
-
-CLIENT_CREDS = get_client_creds()
 
 
 @gmail_router.get("/gmail/auth/login")
@@ -17,11 +13,11 @@ async def login():
     """
     Generates the Google Login URL using Aiogoogle.
     """
-    aiogoogle = Aiogoogle(client_creds=CLIENT_CREDS)
+    aiogoogle = Aiogoogle(client_creds=GoogleAPI.load_client_creds())
     
     # Generate the authorization URL
     uri = aiogoogle.oauth2.authorization_url(
-        client_creds=CLIENT_CREDS,
+        client_creds=GoogleAPI.load_client_creds(),
         state="some_secure_state_string",
         access_type="offline",
         include_granted_scopes=True,
@@ -44,11 +40,11 @@ async def callback(request: Request):
         raise HTTPException(status_code=400, detail="No code found")
 
     try:
-        aiogoogle = Aiogoogle(client_creds=CLIENT_CREDS)
+        aiogoogle = Aiogoogle(client_creds=GoogleAPI.load_client_creds())
 
         user_creds = await aiogoogle.oauth2.build_user_creds(
             grant=code,
-            client_creds=CLIENT_CREDS,
+            client_creds=GoogleAPI.load_client_creds(),
         )
         
         await mongo.db[COLLECTIONS['users']].update_one(

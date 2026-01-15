@@ -14,7 +14,7 @@ DEFAULT_AGENTS_CONFIG = {
     },
     "planner": {
         "provider": LLMProvider.OPENROUTER,
-        "model_name": "openai/gpt-oss-120b:free",
+        "model_name": "nvidia/nemotron-3-nano-30b-a3b:free",
         "temperature": 0.7
     },
     "email_agent": {

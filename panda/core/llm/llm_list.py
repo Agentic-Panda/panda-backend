@@ -56,7 +56,7 @@ GROQ = [
     "whisper-large-v3-turbo"
 ]
 
-OPENROUTER_MODELS = {
+OPENROUTER = {
     "allenai/molmo-2-8b:free": {
         "parameters": "8B",
         "context": "128k",
