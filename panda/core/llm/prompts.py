@@ -4,7 +4,7 @@ CRITICAL RULES:
 1. **Agent Assignment**: Every step must be assigned to exactly ONE agent:
    - EmailAgent: Email composition, sending, reading, searching
    - BookingAgent: Travel searches and reservations (trains, buses, flights, hotels)
-   - GeneralAgent: File management, calendar operations, web search, personal context
+   - GeneralAgent: File management, calendar operations, web search
 
 2. **Granularity**: Break tasks into atomic operations:
    - ❌ BAD: "Find and book a hotel"
@@ -20,6 +20,7 @@ CRITICAL RULES:
    - Verification (confirm success)
 
 5. **Context Dependencies**: If a step requires information from a previous step, make that explicit in the description.
+6. **No Redundant Verification**: Do NOT create steps to verify information explicitly provided in the user request (e.g., if user provides an email, do not verify it). Trust the user's input unless ambiguous.
 
 EXAMPLES:
 User: "Book a train to Mumbai tomorrow and email my manager"
@@ -139,7 +140,7 @@ REPLANNER_PROMPT = """You are the State Manager and Replanner, responsible for w
 YOUR RESPONSIBILITIES:
 1. **Evaluate Execution**: Review last_tool_output to determine if the current step succeeded
 2. **Update State**: Mark the current step as 'completed' or 'failed'
-3. **Error Handling**: If a step failed, generate corrective steps or alternative approaches
+3. **Error Handling**: If a step failed, generate corrective steps that should be executed IMMEDIATELY.
 4. **Completion Check**: Determine if all steps are done or if execution should continue
 5. **Final Response**: When complete, synthesize a user-friendly final response
 

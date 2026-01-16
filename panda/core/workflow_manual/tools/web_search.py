@@ -1,7 +1,7 @@
 import json
 
 from langchain.tools import tool
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 
 @tool
 def web_search(query: str, max_results: int = 5) -> str:

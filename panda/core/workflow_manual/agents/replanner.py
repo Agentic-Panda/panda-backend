@@ -52,14 +52,33 @@ Evaluate the execution and determine next actions.""")
     
     # Add new steps if replanning
     if response.new_steps:
-        max_id = max(s["id"] for s in updated_plan)
-        for idx, new_step in enumerate(response.new_steps):
-            updated_plan.append({
-                "id": max_id + idx + 1,
-                "description": new_step.description,
+        # Find insertion index (immediately after current step)
+        insert_idx = 0
+        current_step_id = 0
+        if current_step:
+            current_step_id = current_step["id"]
+            # Find the index of the current step in the list
+            for i, s in enumerate(updated_plan):
+                if s["id"] == current_step_id:
+                    insert_idx = i + 1
+                    break
+        else:
+            # If no current step (e.g. at start), insert at beginning
+            insert_idx = 0
+            
+        # Insert new steps
+        for i, new_step_model in enumerate(response.new_steps):
+            new_plan_step = {
+                "id": 0, # Placeholder, will be re-indexed
+                "description": new_step_model.description,
                 "status": "pending",
-                "assigned_agent": new_step.assigned_agent
-            })
+                "assigned_agent": new_step_model.assigned_agent
+            }
+            updated_plan.insert(insert_idx + i, new_plan_step)
+            
+        # Re-index all steps to ensure sequence is correct
+        for i, step in enumerate(updated_plan):
+            step["id"] = i + 1
     
     print(f"\n🔄 REPLANNER: Status = {response.status}")
     if current_step:
