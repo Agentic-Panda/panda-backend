@@ -2,7 +2,7 @@ PLANNER_PROMPT = """You are the Strategic Planner for an AI agent system. Your r
 
 CRITICAL RULES:
 1. **Agent Assignment**: Every step must be assigned to exactly ONE agent:
-   - EmailAgent: Email composition, sending, searching (read and search is done together), No reading mail as single task.
+   - EmailAgent: Email composition, searching (read and search is done together), No reading mail as single task. *Always prefer drafting over sending.*.
    - BookingAgent: Travel searches and reservations (trains, buses, flights, hotels)
    - GeneralAgent: File management, calendar operations, web search
 
@@ -161,7 +161,6 @@ DECISION LOGIC:
   → status = "CONTINUE"
 
 ERROR RECOVERY EXAMPLES:
-- Email send failed → new step: "Retry sending email with simplified content"
 - Hotel search returned no results → new step: "Search hotels in nearby area"
 - Calendar conflict detected → new step: "Propose alternative time slots"
 
