@@ -4,8 +4,10 @@ from panda.models.agents.state import AgentState
 from panda.core.llm.prompts import GENERAL_AGENT_PROMPT
 
 from panda.core.workflow_manual.tools.web_search import web_search
+from panda.core.workflow_manual.tools.calendar import calendar_tools
 
-general_tools = [web_search]
+
+general_tools = [web_search] + calendar_tools 
 
 
 async def general_agent_node(state: AgentState) -> AgentState:

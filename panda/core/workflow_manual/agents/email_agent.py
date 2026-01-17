@@ -90,10 +90,10 @@ Execute this task. Use your email tools if needed. Provide a detailed response."
         )
 
         tool_output = final_response.content
+        print("EMAIL AGENT(tool) : ", tool_output)
     else:
         tool_output = email_response.content
-    
-    print(f"   Result: {tool_output}\n")
+        print("EMAIL AGENT(no tool) : ", tool_output)
     
     return {
         **state,
