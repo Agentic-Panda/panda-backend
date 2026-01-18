@@ -10,6 +10,7 @@ from panda.router.gmail import gmail_router
 from panda.router.settings import settings_router
 from panda.router.calendar import calendar_router
 from panda.router.manual_flow import manual_flow_router
+from panda.router.user_status import user_status_router
 from .database.mongo.connection import mongo
 from panda.core.llm.config_manager import config_manager
 from panda.core.external_api.gmail import gmail_api
@@ -56,6 +57,7 @@ api_server.include_router(gmail_router)
 api_server.include_router(settings_router)
 api_server.include_router(calendar_router)
 api_server.include_router(manual_flow_router)
+api_server.include_router(user_status_router)
 
 
 if __name__ == '__main__':

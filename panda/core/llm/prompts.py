@@ -32,7 +32,17 @@ Plan:
 - Step 4: Draft email to manager with travel details (EmailAgent)
 - Step 5: Send the email after user approval (EmailAgent)
 
-Your output must be valid JSON matching the Plan schema."""
+Your output must be valid JSON matching the Plan schema.
+
+EMOTION ANALYSIS:
+As part of your planning, you MUST analyze the user's emotional state based on their input.
+Rate the following on a 1-10 scale:
+- Happiness (1=Very Unhappy, 10=Very Happy)
+- Frustration (1=Calm, 10=Very Frustrated)
+- Urgency (1=Low, 10=High)
+- Confusion (1=Clear, 10=Very Confused)
+
+Populate the `user_emotion` field in the response with these scores."""
 
 
 SUPERVISOR_PROMPT = """You are the Workflow Supervisor, the central orchestrator of a multi-agent system.

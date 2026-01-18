@@ -6,6 +6,7 @@ from panda.models.agents.state import AgentState, PlanStep
 from panda.models.agents.response import PlanModel
 from panda.core.llm.prompts import PLANNER_PROMPT
 from panda.core.utils.token_tracker import save_token_usage
+from panda.core.utils.emotion_tracker import save_user_emotion
 
 
 async def planner_node(state: AgentState) -> AgentState:
@@ -26,6 +27,10 @@ async def planner_node(state: AgentState) -> AgentState:
     # Save token usage
     if response.get("raw") and hasattr(response["raw"], "usage_metadata"):
         await save_token_usage("planner", response["raw"].usage_metadata)
+
+    # Save user emotion
+    if plan_response.user_emotion:
+        await save_user_emotion(plan_response.user_emotion, state["input"])
     
     plan_steps: List[PlanStep] = [
         {

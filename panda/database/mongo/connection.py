@@ -7,7 +7,8 @@ COLLECTIONS = {
     'users': 'users',
     'processed_emails': 'processed_emails',
     'settings': 'settings',
-    'token_usage': 'token_usage'
+    'token_usage': 'token_usage',
+    'user_emotions': 'user_emotions'
 }
 
 class Database:
