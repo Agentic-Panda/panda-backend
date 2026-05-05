@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.mongodb import MongoDBJobStore
@@ -11,6 +11,7 @@ from arcis.core.scheduler.job_store import job_store
 from arcis.core.scheduler.job_executor import execute_job, execute_prefetch
 from arcis.models.scheduler.job_models import ScheduledJob, JobType
 from arcis.core.external_api.internal_calendar import calendar_wrapper, CalendarItem
+from arcis.core.utils.timezone import USER_TZ, now
 from arcis.logger import LOGGER
 
 
@@ -35,6 +36,7 @@ class SchedulerService:
 
             self.scheduler = AsyncIOScheduler(
                 jobstores={"default": mongo_jobstore},
+                timezone=USER_TZ,
                 job_defaults={
                     "coalesce": True,      # merge missed runs into one
                     "max_instances": 1,     # prevent overlapping
@@ -80,12 +82,12 @@ class SchedulerService:
         if needs_prefetch and not job.prefetch_at:
             lead = timedelta(minutes=PREFETCH_LEAD_MINUTES)
             candidate = job.trigger_at - lead
-            if candidate > datetime.now(tz=timezone.utc):
+            if candidate > now():
                 job.prefetch_at = candidate
             elif has_prefetch_queries:
                 # If trigger is too soon for the normal lead time but prefetch was
                 # explicitly requested, schedule it to run immediately
-                job.prefetch_at = datetime.now(tz=timezone.utc) + timedelta(seconds=5)
+                job.prefetch_at = now() + timedelta(seconds=5)
 
         # 3. Save to our metadata store
         job_id = await job_store.create_job(job)
@@ -119,7 +121,7 @@ class SchedulerService:
             self._add_date_trigger(job_id, job.trigger_at, "main")
 
         # Schedule prefetch if applicable
-        if job.prefetch_at and job.prefetch_at > datetime.now(tz=timezone.utc):
+        if job.prefetch_at and job.prefetch_at > now():
             self._add_prefetch_trigger(job_id, job.prefetch_at)
 
         LOGGER.info(f"SCHEDULER: Job {job_id} scheduled — "
@@ -224,10 +226,10 @@ class SchedulerService:
                 # Re-register triggers
                 if job_type == JobType.CRON.value and cron_expr:
                     self._add_cron_trigger(job_id, cron_expr)
-                elif trigger_at > datetime.now(tz=timezone.utc):
+                elif trigger_at > now():
                     self._add_date_trigger(job_id, trigger_at, "main")
 
-                if prefetch_at and prefetch_at > datetime.now(tz=timezone.utc):
+                if prefetch_at and prefetch_at > now():
                     self._add_prefetch_trigger(job_id, prefetch_at)
 
                 rehydrated += 1

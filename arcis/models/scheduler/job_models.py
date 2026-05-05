@@ -1,7 +1,9 @@
 from enum import Enum
 from typing import Optional, Dict, Any
-from datetime import datetime, timezone
+from datetime import datetime
 from pydantic import BaseModel, Field
+
+from arcis.core.utils.timezone import now
 
 
 class JobType(str, Enum):
@@ -65,7 +67,7 @@ class ScheduledJob(BaseModel):
 
     # Status tracking
     status: JobStatus = JobStatus.PENDING
-    created_at: datetime = Field(default_factory=lambda: datetime.now(tz=timezone.utc))
+    created_at: datetime = Field(default_factory=now)
     completed_at: Optional[datetime] = None
     error: Optional[str] = None
 

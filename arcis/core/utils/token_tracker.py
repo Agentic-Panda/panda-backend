@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from arcis.core.utils.timezone import now
 from arcis.database.mongo.connection import mongo, COLLECTIONS
 from arcis.logger import LOGGER
 
@@ -32,7 +32,7 @@ async def save_token_usage(agent_name: str, usage_metadata: dict, model_name: st
         "completion_tokens": completion_tokens,
         "total_tokens": total_tokens,
         "model_name": model_name,
-        "timestamp": datetime.now(timezone.utc)
+        "timestamp": now()
     }
 
     try:

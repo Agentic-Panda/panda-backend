@@ -6,6 +6,7 @@ from bson.errors import InvalidId
 
 from arcis.database.mongo.connection import mongo, COLLECTIONS
 from arcis.models.scheduler.job_models import ScheduledJob, JobStatus
+from arcis.core.utils.timezone import now
 from arcis.logger import LOGGER
 
 
@@ -62,10 +63,10 @@ class JobStore:
 
     async def get_pending_jobs(self) -> list[dict]:
         """Jobs whose trigger_at has passed and are still pending/ready."""
-        now = datetime.now()
+        now_dt = now()
         cursor = self.collection.find({
             "status": {"$in": [JobStatus.PENDING.value, JobStatus.READY.value]},
-            "trigger_at": {"$lte": now}
+            "trigger_at": {"$lte": now_dt}
         }).sort("trigger_at", 1)
         jobs = await cursor.to_list(length=100)
         for j in jobs:
@@ -75,10 +76,10 @@ class JobStore:
 
     async def get_jobs_needing_prefetch(self) -> list[dict]:
         """Jobs whose prefetch_at has passed but haven't been prefetched yet."""
-        now = datetime.now()
+        now_dt = now()
         cursor = self.collection.find({
             "status": JobStatus.PENDING.value,
-            "prefetch_at": {"$ne": None, "$lte": now}
+            "prefetch_at": {"$ne": None, "$lte": now_dt}
         }).sort("prefetch_at", 1)
         jobs = await cursor.to_list(length=50)
         for j in jobs:
@@ -103,7 +104,7 @@ class JobStore:
         """Convenience: update job status and optionally set error."""
         updates = {"status": status.value}
         if status == JobStatus.COMPLETED:
-            updates["completed_at"] = datetime.now()
+            updates["completed_at"] = now()
         if error:
             updates["error"] = error
         return await self.update_job(job_id, updates)

@@ -23,11 +23,12 @@ behalf of the user.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 
 from langchain.tools import tool
 
 from arcis.core.external_api.internal_calendar import calendar_wrapper
+from arcis.core.utils.timezone import now as tz_now
 from arcis.database.mongo.connection import mongo, COLLECTIONS
 from arcis.logger import LOGGER
 
@@ -45,9 +46,9 @@ async def get_upcoming_calendar(hours_ahead: int = 24) -> str:
         hours_ahead: How many hours into the future to look (default 24).
     """
     try:
-        now = datetime.now(timezone.utc)
-        end = now + timedelta(hours=hours_ahead)
-        items = await calendar_wrapper.get_items_in_range(now, end)
+        current = tz_now()
+        end = current + timedelta(hours=hours_ahead)
+        items = await calendar_wrapper.get_items_in_range(current, end)
 
         if not items:
             return json.dumps({

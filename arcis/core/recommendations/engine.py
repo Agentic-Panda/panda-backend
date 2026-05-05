@@ -17,13 +17,11 @@ a new @tool function and appending it to `recommendation_tools`.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 
 from arcis.core.llm.factory import LLMFactory
 from arcis.core.utils.token_tracker import save_token_usage
-from arcis.core.utils.timezone import now_str
+from arcis.core.utils.timezone import now_str, now
 from arcis.database.mongo.connection import mongo, COLLECTIONS
 from arcis.logger import LOGGER
 from arcis.models.recommendations import RecommendationList
@@ -308,7 +306,7 @@ async def _store_recommendations(
     Uses delete-then-insert which is fine for single-user.
     """
     collection = mongo.db[COLLECTIONS["recommendations"]]
-    generated_at = datetime.now(timezone.utc)
+    generated_at = now()
 
     docs = [
         {
