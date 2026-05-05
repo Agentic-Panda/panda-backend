@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from arcis.core.utils.timezone import now
 from arcis.database.mongo.connection import mongo, COLLECTIONS
 from arcis.logger import LOGGER
 
@@ -17,7 +17,7 @@ async def save_user_emotion(emotion, input_text: str):
     record = {
         "emotions": emotion.model_dump(),
         "input_text": input_text,
-        "timestamp": datetime.now(timezone.utc)
+        "timestamp": now()
     }
 
     try:

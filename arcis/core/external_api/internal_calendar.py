@@ -5,6 +5,7 @@ from typing import List, Optional, Dict, Any
 from bson import ObjectId
 from bson.errors import InvalidId
 from arcis.database.mongo.connection import mongo
+from arcis.core.utils.timezone import USER_TZ
 from pydantic import BaseModel, Field
 
 # --- Data Models (Pydantic) ---
@@ -111,12 +112,12 @@ class CalendarWrapper:
         ]
         """
         # 1. Calculate time range for the query
-        start_date = datetime(year, month, 1)
+        start_date = datetime(year, month, 1, tzinfo=USER_TZ)
         # End date is the 1st of the next month
         if month == 12:
-            end_date = datetime(year + 1, 1, 1)
+            end_date = datetime(year + 1, 1, 1, tzinfo=USER_TZ)
         else:
-            end_date = datetime(year, month + 1, 1)
+            end_date = datetime(year, month + 1, 1, tzinfo=USER_TZ)
 
         # 2. Fetch all items for this month in one DB call
         month_items = await self.get_items_in_range(start_date, end_date)
@@ -136,7 +137,7 @@ class CalendarWrapper:
                 
                 # Filter items belonging to this specific day
                 # (You can optimize this further by using a dict map instead of list comprehension)
-                current_day_start = datetime(year, month, day)
+                current_day_start = datetime(year, month, day, tzinfo=USER_TZ)
                 current_day_end = current_day_start + timedelta(days=1)
                 
                 day_items = [

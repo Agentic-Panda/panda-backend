@@ -1,6 +1,6 @@
 import uuid
 
-from datetime import datetime, timezone
+from arcis.core.utils.timezone import now
 
 from langgraph.graph import StateGraph, END
 from langgraph.types import Command
@@ -167,7 +167,7 @@ Body:
                     "thread_id": thread_id,
                     "subject": email.get("subject", ""),
                     "sender": email.get("sender", ""),
-                    "processed_at": datetime.now(timezone.utc)
+                    "processed_at": now()
                 }},
                 upsert=True
             )
