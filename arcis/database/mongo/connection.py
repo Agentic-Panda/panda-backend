@@ -14,6 +14,7 @@ COLLECTIONS = {
     'apscheduler_jobs': 'apscheduler_jobs',
     'notifications': 'notifications',
     'recommendations': 'recommendations',
+    'tts_voices': 'tts_voices',
 }
 
 class Database:

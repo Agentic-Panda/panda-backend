@@ -13,21 +13,6 @@ from arcis.core.stt.stt_manager import transcribe_audio
 
 chat_router = APIRouter(prefix="/chat")
 
-@chat_router.post("/voice-upload")
-async def upload_voice(voice_id: str, file: UploadFile = File(...)):
-    """Upload a custom voice WAV file and set it as the active voice state."""
-    if not file.filename.endswith(".wav"):
-        raise HTTPException(status_code=400, detail="Only .wav files are supported")
-    
-    try:
-        content = await file.read()
-        success = tts_manager.update_voice_state_from_bytes(voice_id, content)
-        if success:
-            return {"status": "success", "message": f"Voice '{voice_id}' updated successfully"}
-        else:
-            raise HTTPException(status_code=500, detail="Failed to parse voice state")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @chat_router.post("/stream")
 async def chat_manual_stream(request: ChatRequest, voice_id: str = "default"):

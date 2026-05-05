@@ -9,7 +9,7 @@ import scipy.io.wavfile
 
 from pocket_tts import TTSModel
 from arcis.logger import LOGGER
-
+from arcis.core.tts.voice_store import get_all_voices
 
 
 class TTSManager:
@@ -35,6 +35,39 @@ class TTSManager:
         except Exception as e:
             error_msg = str(e)
             LOGGER.error(f"Failed to initialize TTS: {error_msg}")
+
+    async def load_voices(self):
+        """Load all custom voices from MongoDB into memory."""
+        if not self.tts_model:
+            LOGGER.warning("TTS model not initialized, skipping custom voice load")
+            return
+            
+        try:
+            voices = await get_all_voices()
+            count = 0
+            for voice in voices:
+                voice_id = voice["voice_id"]
+                file_path = voice["file_path"]
+                if os.path.exists(file_path):
+                    try:
+                        state = self.tts_model.get_state_for_audio_prompt(file_path)
+                        self.voice_states[voice_id] = state
+                        
+                        if voice.get("is_default"):
+                            self.default_voice_state = state
+                            self.voice_states["default"] = state
+                            LOGGER.info(f"Custom default voice set to: {voice_id}")
+                            
+                        count += 1
+                    except Exception as e:
+                        LOGGER.error(f"Failed to load voice {voice_id} from {file_path}: {e}")
+                else:
+                    LOGGER.warning(f"Voice file missing for {voice_id} at {file_path}")
+                    
+            if count > 0:
+                LOGGER.info(f"Loaded {count} custom voices from storage")
+        except Exception as e:
+            LOGGER.error(f"Failed to load custom voices from DB: {e}")
 
 
     def update_voice_state_from_bytes(self, voice_id: str, wav_bytes: bytes):

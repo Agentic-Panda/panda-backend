@@ -1,5 +1,6 @@
 from datetime import datetime
 from bson import ObjectId
+from bson.errors import InvalidId
 from arcis.core.llm.short_memory import db_client
 
 db = db_client['arcis_short_memory']
@@ -27,6 +28,29 @@ def get_all_pending() -> list:
     for item in items:
         item["_id"] = str(item["_id"])
     return items
+
+
+def get_all_interrupts(status: str | None = None, skip: int = 0, limit: int = 50) -> list:
+    """Get interrupts with optional status filter and pagination."""
+    query = {}
+    if status:
+        query["status"] = status
+    items = list(
+        pending_col.find(query)
+        .sort("created_at", -1)
+        .skip(skip)
+        .limit(limit)
+    )
+    for item in items:
+        item["_id"] = str(item["_id"])
+    return items
+
+
+def get_pending_count() -> dict:
+    """Get count of pending (unresolved) interrupts."""
+    pending = pending_col.count_documents({"status": "pending"})
+    total = pending_col.count_documents({})
+    return {"pending": pending, "total": total}
 
 
 def get_pending_by_id(interrupt_id: str) -> dict | None:

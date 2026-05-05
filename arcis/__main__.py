@@ -20,6 +20,7 @@ from arcis.router.onboarding import onboarding_router
 from arcis.router.auth import auth_router
 from arcis.router.spotify import spotify_router
 from arcis.router.dashboard import dashboard_router
+from arcis.router.voices import voices_router
 
 from arcis.database.mongo.connection import mongo
 
@@ -66,6 +67,7 @@ async def lifespan(app: FastAPI):
     try:
         loop = asyncio.get_event_loop() # Avoid blocking event loop for slow model loads
         await loop.run_in_executor(None, tts_manager.initialize, Config.TTS_DEFAULT_VOICE) 
+        await tts_manager.load_voices()
     except Exception as e:
         LOGGER.error(f"TTS Manager initialization failed: {e}")
     
@@ -157,6 +159,7 @@ api_server.include_router(onboarding_router)
 api_server.include_router(auth_router)
 api_server.include_router(spotify_router)
 api_server.include_router(dashboard_router)
+api_server.include_router(voices_router)
 
 
 if __name__ == '__main__':
