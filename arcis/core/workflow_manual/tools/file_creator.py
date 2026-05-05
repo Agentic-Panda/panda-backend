@@ -1,15 +1,13 @@
 import os
 import uuid
-import tempfile
 
 from langchain.tools import tool
 
 from arcis.logger import LOGGER
+from arcis import Config
 
 
-# Dedicated directory for generated files
-FILES_DIR = os.path.join(tempfile.gettempdir(), "arcis_files")
-os.makedirs(FILES_DIR, exist_ok=True)
+os.makedirs(Config.FILE_STORAGE_PATH, exist_ok=True)
 
 
 @tool
@@ -40,7 +38,7 @@ def create_text_file(filename: str, content: str) -> str:
         # Add unique suffix to prevent collisions
         unique_suffix = uuid.uuid4().hex[:8]
         full_name = f"{safe_name}_{unique_suffix}.txt"
-        file_path = os.path.join(FILES_DIR, full_name)
+        file_path = os.path.join(Config.FILE_STORAGE_PATH, full_name)
 
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)

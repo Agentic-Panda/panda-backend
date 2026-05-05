@@ -214,3 +214,5 @@ API_SCHEMA.md
 ARCIS-Telegram-Client.session
 arcis.log
 .agents/
+
+generated_files

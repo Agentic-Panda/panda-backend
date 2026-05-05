@@ -9,7 +9,7 @@ Extract context and create steps using these specialized agents:
 
 **SchedulerAgent**: Schedule meetings, set reminders, manage calendar events, read calendar items, delete calendar items.
 **BookingAgent**: Travel bookings, hotel reservations, flight searches.
-**UtilityAgent**: General web searches, looking up information, writing notes, reading notes, interacting with the file system.
+**UtilityAgent**: General web searches, looking up information, writing txt files.
 
 CRITICAL EXECUTION RULES for Telegram DMs:
 - Telegram messages are usually short and direct. Don't overcomplicate.

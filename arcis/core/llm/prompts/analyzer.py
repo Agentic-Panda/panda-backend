@@ -29,7 +29,7 @@ Extract context and create steps using these agents:
 **EmailAgent**: Draft replies (ONLY if explicitly asked or direct question needs answer)
 **SchedulerAgent**: Schedule meetings, deadlines, events, reminders
 **BookingAgent**: Travel bookings, hotel reservations
-**UtilityAgent**: Calendar queries, file operations, web searches
+**UtilityAgent**: Calendar queries, file creation, web searches
 
 CRITICAL EXECUTION RULES:
 - Extract ALL context (dates, names, places, times) into step descriptions

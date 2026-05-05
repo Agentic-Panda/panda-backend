@@ -12,17 +12,19 @@ class Config:
         LOGGER.error("CORE : Essential Configs (DATABASE_URL) are missing")
         exit(1)
 
+    WORK_DIR = getenv("WORK_DIR", "./")
     DATABASE_NAME = getenv("DATABASE_NAME", 'arcis_db')
 
     AUTO_CHECK_INTERVAL = getenv("AUTO_CHECK_INTERVAL", 300)
 
-    GEMINI_API = getenv('GEMINI_API')
-    OPENROUTER_API_KEY = getenv("OPENROUTER_API_KEY")
 
     OAUTHLIB_INSECURE_TRANSPORT = getenv('OAUTHLIB_INSECURE_TRANSPORT', 1) # only for local testing
     GOOGLE_CLIENT_SECRETS_FILE = getenv('CLIENT_SECRETS_FILE', 'google_credentials.json')
     GOOGLE_REDIRECT_URI = getenv('GOOGLE_REDIRECT_URI', 'http://localhost:8000/')
 
+
+    GEMINI_API = getenv('GEMINI_API')
+    OPENROUTER_API_KEY = getenv("OPENROUTER_API_KEY")
     MISTRAL_API_KEY = getenv("MISTRAL_API_KEY")
     CEREBRAS_API_KEY = getenv("CEREBRAS_API_KEY")
     GROQ_API_KEY = getenv("GROQ_API_KEY")
@@ -42,17 +44,14 @@ class Config:
     TG_BOT_TOKEN = getenv("TG_BOT_TOKEN")
     ALLOWED_TG_USER_ID = getenv("ALLOWED_TG_USER_ID")
 
-    # Telegram User Session (for listening to DMs sent TO the user by others)
-    # Generate once with: python scripts/gen_session.py
+    # Telegram User Session
     TG_USER_SESSION = getenv("TG_USER_SESSION")
-    # If "true", auto-send AI-generated replies for social messages without waiting for owner approval
     TG_AUTO_SEND_REPLY = getenv("TG_AUTO_SEND_REPLY", "true")
 
     # MCP Config
     MCP_SERVERS_CONFIG_PATH = getenv("MCP_SERVERS_CONFIG_PATH", None)
     MCP_TOOL_THRESHOLD = int(getenv("MCP_TOOL_THRESHOLD", "30"))
 
-    WORK_DIR = getenv("WORK_DIR", "./")
 
     # Scheduler Config
     SCHEDULER_PREFETCH_LEAD_MINUTES = int(getenv("SCHEDULER_PREFETCH_LEAD_MINUTES", "120"))
@@ -80,3 +79,6 @@ class Config:
     # Simple Auth config
     AUTH_USERNAME = getenv("AUTH_USERNAME")
     AUTH_PASSWORD = getenv("AUTH_PASSWORD")
+
+
+    FILE_STORAGE_PATH = getenv("FILE_STORAGE_PATH", "/teamspace/studios/this_studio/arcis-backend/arcis/generated_files/")
