@@ -302,6 +302,9 @@ class SpotifyAPI:
         (within 60 s).  Returns the parsed JSON body, or a standardised error
         dict ``{"error": "...", "status_code": N}``.
         """
+        if not self._access_token:
+            await self.load_creds()
+
         # Auto-refresh if token is stale
         if time.time() >= (self._token_expiry - 60):
             await self._refresh_access_token()

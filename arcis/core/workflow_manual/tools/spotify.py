@@ -12,6 +12,24 @@ def _format_result(data: dict | list) -> str:
 
 
 # ===================================================================
+# AUTHENTICATION
+# ===================================================================
+
+@tool
+async def spotify_authenticate() -> str:
+    """
+    Get the Spotify authorization URL to authenticate the user.
+    Use this tool if any other Spotify tool returns an authentication error (e.g., 'No refresh token available', 'Re-authenticate').
+    Provide the URL to the user and use [NEED_INPUT] to pause execution until they confirm they have logged in.
+    """
+    try:
+        url = spotify_api.get_auth_url()
+        return f"Please ask the user to authenticate by visiting this URL: {url} . Include [NEED_INPUT] in your response to wait for their confirmation."
+    except Exception as e:
+        return f"❌ Error: {e}"
+
+
+# ===================================================================
 # SEARCH
 # ===================================================================
 
@@ -776,6 +794,8 @@ async def spotify_get_followed_artists(limit: int = 20) -> str:
 # ===================================================================
 
 spotify_tools = [
+    # Authentication
+    spotify_authenticate,
     # Search & Info
     spotify_search,
     spotify_get_track,
