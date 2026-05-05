@@ -143,8 +143,8 @@ class LLMFactory:
                 temperature=kwargs.get("temperature", 0.7),
                 api_key=api_key,
                 base_url="https://integrate.api.nvidia.com/v1",
-                max_retries=3,
-                timeout=30,
+                max_retries=5,
+                timeout=120,
             )
 
         else:
