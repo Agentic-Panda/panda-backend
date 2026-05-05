@@ -47,6 +47,18 @@ class TTSManager:
             count = 0
             for voice in voices:
                 voice_id = voice["voice_id"]
+                
+                if voice.get("is_builtin"):
+                    if voice.get("is_default"):
+                        try:
+                            state = self.tts_model.get_state_for_audio_prompt(voice_id)
+                            self.default_voice_state = state
+                            self.voice_states["default"] = state
+                            LOGGER.info(f"Built-in default voice set to: {voice_id}")
+                        except Exception as e:
+                            LOGGER.error(f"Failed to load built-in default voice {voice_id}: {e}")
+                    continue
+                
                 file_path = voice["file_path"]
                 if os.path.exists(file_path):
                     try:

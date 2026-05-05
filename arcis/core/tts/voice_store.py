@@ -71,25 +71,41 @@ async def delete_voice_metadata(voice_id: str) -> bool:
     return result.deleted_count > 0
 
 
-async def set_default_voice(voice_id: str) -> bool:
+async def set_default_voice(voice_id: str, is_builtin: bool = False, name: str = "") -> bool:
     """
     Mark *voice_id* as the default voice and un-default everything else.
-    Returns False if the voice_id doesn't exist.
+    If it's built-in, we upsert a metadata record just to track its default status.
+    Returns False if a custom voice doesn't exist.
     """
-    voice = await get_voice(voice_id)
-    if not voice:
-        return False
+    if not is_builtin:
+        voice = await get_voice(voice_id)
+        if not voice:
+            return False
 
     # Clear existing default
     await mongo.db[VOICE_COLLECTION].update_many(
         {"is_default": True},
         {"$set": {"is_default": False}},
     )
-    # Set new default
-    await mongo.db[VOICE_COLLECTION].update_one(
-        {"voice_id": voice_id},
-        {"$set": {"is_default": True}},
-    )
+    
+    if is_builtin:
+        await mongo.db[VOICE_COLLECTION].update_one(
+            {"voice_id": voice_id},
+            {"$set": {
+                "voice_id": voice_id,
+                "name": name,
+                "is_default": True,
+                "is_builtin": True,
+            }},
+            upsert=True
+        )
+    else:
+        # Set new default for custom voice
+        await mongo.db[VOICE_COLLECTION].update_one(
+            {"voice_id": voice_id},
+            {"$set": {"is_default": True}},
+        )
+        
     LOGGER.info(f"Default voice set to: {voice_id}")
     return True
 
