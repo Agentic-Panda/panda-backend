@@ -9,7 +9,7 @@ RULES:
    - "preference": Likes, dislikes, habits, communication style
    - "key_detail": Important dates, contacts, account numbers, addresses
    - "learned_fact": Acquired knowledge relevant to the user
-5. If there is NOTHING worth saving, return an empty list
+5. If there is NOTHING worth saving, return an empty facts list
 6. Keep facts SHORT and CLEAR. Maximum 1-2 sentences each
 7. Do not call any tools.
 
@@ -22,4 +22,4 @@ IGNORE — Do NOT extract any of the following:
 - Actions the AI performed ("I searched for...", "I created a file...", "I scheduled...")
 
 Focus ONLY on facts about the USER: who they are, what they prefer, important personal details, and things they want remembered.
-"""
+"""

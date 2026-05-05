@@ -5,10 +5,12 @@ Session state is persisted in MongoDB so it survives server restarts.
 Once the interview is complete, key facts are extracted and stored in Qdrant.
 """
 
-import json
 import uuid
 import logging
 from datetime import datetime
+from typing import Literal
+
+from pydantic import BaseModel, Field
 
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
@@ -157,6 +159,23 @@ def get_onboarding_status() -> dict:
     return {"onboarded": False, "in_progress": False}
 
 
+class ExtractedFact(BaseModel):
+    """A single fact extracted from the onboarding interview."""
+    text: str = Field(description="A concise, self-contained sentence about the user")
+    category: Literal["user_profile", "preference", "key_detail", "learned_fact"] = Field(
+        default="user_profile",
+        description="Category of the fact",
+    )
+
+
+class ExtractedFacts(BaseModel):
+    """Collection of facts extracted from the onboarding interview."""
+    facts: list[ExtractedFact] = Field(
+        default_factory=list,
+        description="List of key facts worth remembering long-term. Empty if nothing worth saving.",
+    )
+
+
 async def _extract_and_store_facts(messages: list[dict]) -> list[dict]:
     """
     Use the LLM to distill the interview conversation into key facts,
@@ -172,6 +191,7 @@ async def _extract_and_store_facts(messages: list[dict]) -> list[dict]:
     conversation_text = "\n".join(conversation_lines)
 
     llm = LLMFactory.get_client_for_agent("memory_extractor")
+    structured_llm = llm.with_structured_output(ExtractedFacts)
 
     prompt_messages = [
         SystemMessage(content=MEMORY_EXTRACTOR_PROMPT),
@@ -179,54 +199,30 @@ async def _extract_and_store_facts(messages: list[dict]) -> list[dict]:
     ]
 
     try:
-        response = await llm.ainvoke(prompt_messages)
-        facts = _parse_facts(response.content)
+        result: ExtractedFacts = await structured_llm.ainvoke(prompt_messages)
+        facts = result.facts
+        logger.info(f"Extracted {len(facts)} facts from interview via structured output")
     except Exception as e:
-        logger.error(f"Failed to extract facts from interview: {e}")
+        logger.error(f"Failed to extract facts from interview: {e}", exc_info=True)
         return []
 
     if not facts:
+        logger.warning("No facts extracted from onboarding interview — nothing to store")
         return []
 
-    # Force category to user_profile for onboarding facts
     items = [
         {
-            "text": fact["text"],
-            "category": fact.get("category", "user_profile"),
+            "text": fact.text,
+            "category": fact.category,
             "source": "onboarding_interview",
         }
         for fact in facts
     ]
 
     try:
-        long_memory.store_many(items)
-        logger.info(f"Stored {len(items)} onboarding facts in long-term memory")
+        point_ids = long_memory.store_many(items)
+        logger.info(f"Stored {len(items)} onboarding facts in long-term memory (IDs: {point_ids[:3]}...)")
     except Exception as e:
-        logger.error(f"Failed to store onboarding facts: {e}")
+        logger.error(f"Failed to store onboarding facts in Qdrant: {e}", exc_info=True)
 
-    return facts
-
-
-def _parse_facts(raw: str) -> list[dict]:
-    """Parse JSON facts from the LLM response."""
-    try:
-        text = raw.strip()
-        if "```json" in text:
-            text = text.split("```json")[1].split("```")[0].strip()
-        elif "```" in text:
-            text = text.split("```")[1].split("```")[0].strip()
-
-        data = json.loads(text)
-        if isinstance(data, dict) and "facts" in data:
-            data = data["facts"]
-        if not isinstance(data, list):
-            return []
-
-        return [
-            {"text": item["text"], "category": item.get("category", "user_profile")}
-            for item in data
-            if isinstance(item, dict) and "text" in item
-        ]
-    except (json.JSONDecodeError, KeyError, IndexError) as e:
-        logger.warning(f"Failed to parse interview facts: {e}")
-        return []
+    return [fact.model_dump() for fact in facts]
