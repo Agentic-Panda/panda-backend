@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from arcis.core.utils.timezone import now_str
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -55,10 +55,7 @@ Execute this task using the available tools.""")
         context=str(state.get("context", {}))
     )
 
-    # Inject local system time with explicit timezone offset
-    current_dt = datetime.now().astimezone()
-    current_time_str = current_dt.strftime("%Y-%m-%d %H:%M:%S %z (%Z)")
-    messages.insert(1, SystemMessage(content=f"Current System Date and Time is: {current_time_str}"))
+    messages.insert(1, SystemMessage(content=f"Current Date and Time is: {now_str()}"))
 
     tool_output = ""
     max_iterations = 3

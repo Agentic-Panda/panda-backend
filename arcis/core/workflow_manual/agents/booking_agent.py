@@ -1,6 +1,6 @@
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage
-from datetime import datetime, timezone
+from arcis.core.utils.timezone import now_str
 from langgraph.types import interrupt
 
 from arcis.core.llm.factory import LLMFactory
@@ -39,8 +39,7 @@ Execute this booking/travel task. Provide detailed results.""")
         context=str(state.get("context", {}))
     )
     
-    current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
-    messages.insert(1, SystemMessage(content=f"Current Date and Time is: {current_time}"))
+    messages.insert(1, SystemMessage(content=f"Current Date and Time is: {now_str()}"))
     
     LOGGER.info(f"BOOKING AGENT: Executing - {current_step['description']}")
 

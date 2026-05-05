@@ -82,3 +82,7 @@ class Config:
 
 
     FILE_STORAGE_PATH = getenv("FILE_STORAGE_PATH", "/teamspace/studios/this_studio/arcis-backend/arcis/generated_files/")
+
+    # Fixed timezone for the system — all agents use this instead of UTC/system time.
+    # Set via env var or defaults to IST. Use IANA timezone names (e.g., "Asia/Kolkata", "US/Eastern").
+    TIMEZONE = getenv("TIMEZONE", "Asia/Kolkata")

@@ -1,5 +1,5 @@
 from langchain_core.prompts import ChatPromptTemplate
-from datetime import datetime, timezone
+from arcis.core.utils.timezone import now_str
 from arcis.core.llm.factory import LLMFactory
 from arcis.models.agents.state import AgentState
 from arcis.models.agents.response import PlanModel
@@ -27,7 +27,7 @@ async def tg_dm_analyzer_node(state: AgentState) -> AgentState:
     chain = analyzer_prompt | structured_llm
     
     try:
-        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
+        current_time = now_str()
         response = await chain.ainvoke({"input": dm_content, "current_time": current_time})
         plan_response = response["parsed"]
 

@@ -1,6 +1,6 @@
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import SystemMessage
-from datetime import datetime, timezone
+from arcis.core.utils.timezone import now_str
 
 from arcis.core.llm.factory import LLMFactory
 from arcis.core.llm.prompts.supervisor import SUPERVISOR_PROMPT
@@ -48,8 +48,7 @@ Determine the next node to route to.""")
         step_agent=current_step["assigned_agent"]
     )
     
-    current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
-    messages.insert(1, SystemMessage(content=f"Current Date and Time is: {current_time}"))
+    messages.insert(1, SystemMessage(content=f"Current Date and Time is: {now_str()}"))
     
     response = await supervisor_llm.ainvoke(messages)
     routing_response = response["parsed"]

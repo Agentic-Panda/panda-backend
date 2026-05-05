@@ -23,6 +23,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 
 from arcis.core.llm.factory import LLMFactory
 from arcis.core.utils.token_tracker import save_token_usage
+from arcis.core.utils.timezone import now_str
 from arcis.database.mongo.connection import mongo, COLLECTIONS
 from arcis.logger import LOGGER
 from arcis.models.recommendations import RecommendationList
@@ -155,10 +156,9 @@ async def _run_research_agent() -> str | None:
         tool_bound_llm = llm_client.bind_tools(recommendation_tools)
 
         # Build the initial message list
-        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
         messages = [
             SystemMessage(content=RECOMMENDATION_AGENT_PROMPT),
-            SystemMessage(content=f"Current Date and Time: {current_time}"),
+            SystemMessage(content=f"Current Date and Time: {now_str()}"),
             HumanMessage(
                 content=(
                     "Gather context about the user's current state and upcoming schedule, "

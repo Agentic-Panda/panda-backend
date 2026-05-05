@@ -1,6 +1,6 @@
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
-from datetime import datetime, timezone
+from arcis.core.utils.timezone import now_str
 
 from arcis.core.llm.factory import LLMFactory
 from arcis.models.agents.state import AgentState
@@ -67,8 +67,7 @@ Evaluate the execution and determine next actions.""")
         plan_summary=plan_summary
     )
     
-    current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z")
-    messages.insert(1, SystemMessage(content=f"Current Date and Time is: {current_time}"))
+    messages.insert(1, SystemMessage(content=f"Current Date and Time is: {now_str()}"))
     
     response = await replanner_llm.ainvoke(messages)
     
