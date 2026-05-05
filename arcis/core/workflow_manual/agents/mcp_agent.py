@@ -9,6 +9,7 @@ from arcis.core.mcp.manager import mcp_manager
 from arcis.core.utils.token_tracker import save_token_usage
 from arcis.logger import LOGGER
 from arcis.core.llm.prompts.mcp import MCP_AGENT_PROMPT
+from arcis.core.workflow_manual.tools.spotify import spotify_tools
 
 
 async def mcp_agent_node(state: AgentState) -> AgentState:
@@ -23,6 +24,8 @@ async def mcp_agent_node(state: AgentState) -> AgentState:
         return {**state, "last_tool_output": "ERROR: No in-progress step found"}
 
     mcp_tools = mcp_manager.get_tools_for_task(current_step["description"])
+    mcp_tools = list(mcp_tools) if mcp_tools else []
+    mcp_tools.extend(spotify_tools)
 
     if not mcp_tools:
         LOGGER.warning("MCP AGENT: No MCP tools available")
